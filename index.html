@@ -3,63 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consulta de Enlace</title>
+    <title>Acceso al Enlace</title>
     <style>
+        /* Diseño moderno para la landing page */
         body {
-            font-family: Arial, sans-serif; display: flex; justify-content: center; 
-            align-items: center; height: 100vh; background-color: #f4f4f9; margin: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f3f4f6;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; color: #374151;
         }
         .tarjeta {
-            background: white; padding: 40px; border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center;
+            background: white; padding: 40px; border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center;
+            max-width: 400px; width: 90%;
         }
-        .boton {
-            display: inline-block; margin-top: 20px; padding: 15px 30px;
-            background-color: #007BFF; color: white; text-decoration: none;
-            border-radius: 5px; font-size: 18px; display: none;
+        h2 { margin-top: 0; color: #111827; }
+        .mensaje { margin: 20px 0; font-size: 16px; min-height: 24px; color: #6b7280; }
+        
+        /* Botón principal */
+        .boton-enlace {
+            display: none; /* Oculto hasta tener el enlace */
+            background-color: #2563eb; color: white; padding: 14px 28px;
+            text-decoration: none; border-radius: 8px; font-weight: 600;
+            font-size: 16px; transition: background-color 0.3s;
+            margin-bottom: 20px; width: 100%; box-sizing: border-box;
         }
-        .boton:hover { background-color: #0056b3; }
-        .cargando { color: #666; font-style: italic; }
+        .boton-enlace:hover { background-color: #1d4ed8; }
+        
+        /* Botón secundario para refrescar */
+        .boton-recargar {
+            background: none; border: none; color: #2563eb; cursor: pointer;
+            text-decoration: underline; font-size: 14px; padding: 10px;
+        }
+
+        /* Animación de carga (Spinner) */
+        .loader {
+            border: 4px solid #f3f3f3; border-top: 4px solid #2563eb;
+            border-radius: 50%; width: 30px; height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px auto; display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div class="tarjeta">
-        <h2>Tu Enlace Directo</h2>
-        <p id="mensaje" class="cargando">Entrando a Gmail a buscar tu último enlace...</p>
-        <a id="botonEnlace" class="boton" href="#" target="_blank">Abrir Enlace</a>
+        <h2>Tu Enlace Seguro</h2>
+        <div class="loader" id="spinner"></div>
+        <div class="mensaje" id="texto-mensaje">Haz clic para consultar tu correo...</div>
         
-        <br><br>
-        <button onclick="buscarEnlace()" style="border:none; background:none; color:blue; cursor:pointer; text-decoration:underline;">Actualizar ahora</button>
+        <a id="botonEnlace" class="boton-enlace" href="#" target="_blank">Entrar ahora</a>
+        
+        <button class="boton-recargar" onclick="buscarEnlace()">Consultar correo actual</button>
     </div>
 
     <script>
-        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
-        const URL_DE_GOOGLE = 'https://script.google.com/macros/s/TU_ID_AQUI/exec';
+        // 🚨 PEGA AQUÍ LA URL DE TU APLICACIÓN WEB DE GOOGLE
+        const GOOGLE_APP_URL = 'https://script.google.com/macros/s/AKfycbxWzBkmCKvS7a_la9znvSTy3_JRZeYGhPsxUGS5L2n_YgPLA4hH_heGzhuDmFM1imvtzQ/exec';
 
         function buscarEnlace() {
-            document.getElementById('mensaje').innerText = "Buscando en tu bandeja de entrada...";
-            document.getElementById('botonEnlace').style.display = 'none';
+            const textoMensaje = document.getElementById('texto-mensaje');
+            const botonEnlace = document.getElementById('botonEnlace');
+            const spinner = document.getElementById('spinner');
 
-            fetch(URL_DE_GOOGLE)
-                .then(respuesta => respuesta.json())
+            // Estado de carga
+            textoMensaje.innerText = "Conectando con Gmail...";
+            botonEnlace.style.display = 'none';
+            spinner.style.display = 'block';
+
+            // Petición al servidor de Google
+            fetch(GOOGLE_APP_URL)
+                .then(respuesta => {
+                    if (!respuesta.ok) throw new Error('Error en la red');
+                    return respuesta.json();
+                })
                 .then(datos => {
-                    if(datos.url) {
-                        document.getElementById('mensaje').innerText = datos.mensaje;
-                        var boton = document.getElementById('botonEnlace');
-                        boton.href = datos.url;
-                        boton.style.display = 'inline-block';
+                    spinner.style.display = 'none'; // Ocultar animación
+                    
+                    if (datos.url) {
+                        textoMensaje.innerText = datos.mensaje;
+                        botonEnlace.href = datos.url;
+                        botonEnlace.style.display = 'inline-block'; // Mostrar botón
                     } else {
-                        document.getElementById('mensaje').innerText = datos.mensaje;
+                        textoMensaje.innerText = datos.mensaje;
                     }
                 })
                 .catch(error => {
-                    document.getElementById('mensaje').innerText = "Error al conectar con Gmail.";
-                    console.error("Error:", error);
+                    spinner.style.display = 'none';
+                    textoMensaje.innerText = "Hubo un problema de conexión con Google Apps Script.";
+                    console.error("Detalle del error:", error);
                 });
         }
 
-        // Ejecutar la búsqueda automáticamente al abrir la página
+        // Ejecutar la búsqueda automáticamente al cargar la página
         window.onload = buscarEnlace;
     </script>
 
