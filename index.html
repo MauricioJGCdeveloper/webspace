@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Enlace</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif; display: flex; justify-content: center; 
+            align-items: center; height: 100vh; background-color: #f4f4f9; margin: 0;
+        }
+        .tarjeta {
+            background: white; padding: 40px; border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center;
+        }
+        .boton {
+            display: inline-block; margin-top: 20px; padding: 15px 30px;
+            background-color: #007BFF; color: white; text-decoration: none;
+            border-radius: 5px; font-size: 18px; display: none;
+        }
+        .boton:hover { background-color: #0056b3; }
+        .cargando { color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div class="tarjeta">
+        <h2>Tu Enlace Directo</h2>
+        <p id="mensaje" class="cargando">Entrando a Gmail a buscar tu último enlace...</p>
+        <a id="botonEnlace" class="boton" href="#" target="_blank">Abrir Enlace</a>
+        
+        <br><br>
+        <button onclick="buscarEnlace()" style="border:none; background:none; color:blue; cursor:pointer; text-decoration:underline;">Actualizar ahora</button>
+    </div>
+
+    <script>
+        // PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
+        const URL_DE_GOOGLE = 'https://script.google.com/macros/s/TU_ID_AQUI/exec';
+
+        function buscarEnlace() {
+            document.getElementById('mensaje').innerText = "Buscando en tu bandeja de entrada...";
+            document.getElementById('botonEnlace').style.display = 'none';
+
+            fetch(URL_DE_GOOGLE)
+                .then(respuesta => respuesta.json())
+                .then(datos => {
+                    if(datos.url) {
+                        document.getElementById('mensaje').innerText = datos.mensaje;
+                        var boton = document.getElementById('botonEnlace');
+                        boton.href = datos.url;
+                        boton.style.display = 'inline-block';
+                    } else {
+                        document.getElementById('mensaje').innerText = datos.mensaje;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('mensaje').innerText = "Error al conectar con Gmail.";
+                    console.error("Error:", error);
+                });
+        }
+
+        // Ejecutar la búsqueda automáticamente al abrir la página
+        window.onload = buscarEnlace;
+    </script>
+
+</body>
+</html>
