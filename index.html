@@ -5,17 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Siempre conectado con nosotros</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f3f4f6;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; margin: 0; color: #374151;
-        }
-        .tarjeta {
-            background: white; padding: 40px; border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center;
-            max-width: 400px; width: 90%;
-        }
+       body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f3f4f6;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    min-height: 100vh; /* Cambiado de height a min-height */
+    margin: 0; 
+    padding: 20px 0; /* Añade un margen seguro arriba y abajo */
+    box-sizing: border-box; /* Evita que el padding genere scroll innecesario */
+    color: #374151;
+}
+
+.tarjeta {
+    background: white; 
+    padding: 30px 20px; /* Reducimos un poco el padding lateral para móviles */
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+    text-align: center;
+    max-width: 400px; 
+    width: 90%;
+    box-sizing: border-box;
+}
         h2 { margin-top: 0; color: #111827; }
         
         .contenedor-pin {
@@ -83,14 +95,14 @@
 
 
 
-<h2>Dar click en el botón de abajo para solucionar conflicto de hogar luego de dar clic en <b>"Estoy de viaje"</b> o <b>"Ver temporalmente"</b> y después en <b>Enviar Email</b></h2>
+<h2>Dar click en el botón de abajo para solucionar conflicto de hogar luego de dar clic en <b>"Estoy de viaje"</b> o <b>"Ver temporalmente"</b> y después en <b>Enviar Email</b> en su dispositivo</h2>
 
 
 
         
         <a id="botonEnlace" class="boton-enlace" href="#" target="_blank">Click aqui para obtener el pin que te solicita tu dispositivo</a>
 
-<h3>Nota: El boton de arriba te funcionará si no han pasado mas de 15 minutos desde que solicitaste el pin, pasado ese tiempo tendras que solicitar otro pin y dar click abajo en consultar de nuevo.</b></h3>
+<h3>Nota: El boton de arriba le funcionará si no han pasado más de 15 minutos desde que solicitó el pin, pasado ese tiempo tendrá que solicitar otro pin y dar click abajo en consultar de nuevo.</b></h3>
         
         <button class="boton-recargar" onclick="buscarEnlace()">Consultar de nuevo (actualizar)</button>
     </div>
