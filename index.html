@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso al Enlace</title>
+    <title>Siempre conectado con nosotros</title>
     <style>
-        /* Diseño moderno para la landing page */
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: #f3f4f6;
@@ -18,11 +17,34 @@
             max-width: 400px; width: 90%;
         }
         h2 { margin-top: 0; color: #111827; }
-        .mensaje { margin: 20px 0; font-size: 16px; min-height: 24px; color: #6b7280; }
         
-        /* Botón principal */
+        .contenedor-pin {
+            display: none;
+            background-color: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 20px 0;
+        }
+        .titulo-pin {
+            font-size: 14px;
+            color: #64748b;
+            margin: 0 0 5px 0;
+            text-transform: uppercase;
+        }
+        .mostrar-pin {
+            color: #2563eb;
+            font-size: 38px;
+            letter-spacing: 8px;
+            margin: 0;
+            font-weight: bold;
+        }
+
+        .mensaje { margin: 15px 0; font-size: 15px; min-height: 24px; color: #6b7280; }
+        .correo-actual { font-size: 13px; color: #9ca3af; margin-bottom: 15px; font-weight: 500;}
+        
         .boton-enlace {
-            display: none; /* Oculto hasta tener el enlace */
+            display: none;
             background-color: #2563eb; color: white; padding: 14px 28px;
             text-decoration: none; border-radius: 8px; font-weight: 600;
             font-size: 16px; transition: background-color 0.3s;
@@ -30,13 +52,11 @@
         }
         .boton-enlace:hover { background-color: #1d4ed8; }
         
-        /* Botón secundario para refrescar */
         .boton-recargar {
             background: none; border: none; color: #2563eb; cursor: pointer;
             text-decoration: underline; font-size: 14px; padding: 10px;
         }
 
-        /* Animación de carga (Spinner) */
         .loader {
             border: 4px solid #f3f3f3; border-top: 4px solid #2563eb;
             border-radius: 50%; width: 30px; height: 30px;
@@ -49,56 +69,98 @@
 <body>
 
     <div class="tarjeta">
-        <h2>Tu Enlace Seguro</h2>
+        <h2>Siempre conectado con nosotros</h2>
+        <div id="etiquetaCorreo" class="correo-actual"></div>
+        
         <div class="loader" id="spinner"></div>
-        <div class="mensaje" id="texto-mensaje">Haz clic para consultar tu correo...</div>
+        <div class="mensaje" id="texto-mensaje">Preparando consulta...</div>
         
-        <a id="botonEnlace" class="boton-enlace" href="#" target="_blank">Entrar ahora</a>
+        <div id="contenedorPin" class="contenedor-pin">
+            <p class="titulo-pin">Último PIN Recibido para inicio de sesión en Netflix por pin</p>
+            <h4 id="pinExtraido" class="mostrar-pin"></h4>
+        </div>
+
+
+
+
+<h2>Dar click en el botón de abajo para solucionar conflicto de hogar luego de dar clic en <b>"Estoy de viaje"</b> o <b>"Ver temporalmente"</b> y después en <b>Enviar Email</b></h2>
+
+
+
         
-        <button class="boton-recargar" onclick="buscarEnlace()">Consultar correo actual</button>
+        <a id="botonEnlace" class="boton-enlace" href="#" target="_blank">Click aqui para obtener el pin que te solicita tu dispositivo</a>
+
+<h3>Nota: El boton de arriba te funcionará si no han pasado mas de 15 minutos desde que solicitaste el pin, pasado ese tiempo tendras que solicitar otro pin y dar click abajo en consultar de nuevo.</b></h3>
+        
+        <button class="boton-recargar" onclick="buscarEnlace()">Consultar de nuevo (actualizar)</button>
     </div>
 
     <script>
-        // 🚨 PEGA AQUÍ LA URL DE TU APLICACIÓN WEB DE GOOGLE
-        const GOOGLE_APP_URL = 'https://script.google.com/macros/s/AKfycby9-83aUFcCqoQ16k4ZKldwHBQ0lxUb7HGRQU5begKcvtNFX9kQFzqf2FdzlukSzqe2IQ/exec';
+        // 🚨 TU URL BASE DE GOOGLE APPS SCRIPT
+        //const GOOGLE_APP_URL = 'https://script.google.com/macros/s/AKfycbxz4h7y2ND0O1xOg7knxdWtlvdpCAeEe280BYK6cQCNaR9Hp1F8bNHhqdWUx9-G_-bsqw/exec';
 
-//https://script.google.com/macros/s/AKfycbxWzBkmCKvS7a_la9znvSTy3_JRZeYGhPsxUGS5L2n_YgPLA4hH_heGzhuDmFM1imvtzQ/exec
+ const GOOGLE_APP_URL = 'https://script.google.com/macros/s/AKfycbxhXK5dS8CYzvLoIDlHiP4ZuUqqd7z9kmY-ymobj4PK7Eu3LX8ZKoqlwbxXHxzQ502Ufg/exec';
+
+        // 1. Extraemos el usuario del parámetro 'm' de la URL actual
+        const urlParams = new URLSearchParams(window.location.search);
+        const usuarioUrl = urlParams.get('m');
 
         function buscarEnlace() {
             const textoMensaje = document.getElementById('texto-mensaje');
             const botonEnlace = document.getElementById('botonEnlace');
+            const contenedorPin = document.getElementById('contenedorPin');
+            const pinExtraido = document.getElementById('pinExtraido');
             const spinner = document.getElementById('spinner');
+            const etiquetaCorreo = document.getElementById('etiquetaCorreo');
 
-            // Estado de carga
-            textoMensaje.innerText = "Conectando con Gmail...";
+            // Si no hay parámetro, detenemos la ejecución y avisamos de forma discreta
+            if (!usuarioUrl) {
+                textoMensaje.innerText = "Parámetro inválido. Asegúrate de incluir '?m=usuario' en la URL.";
+                textoMensaje.style.color = "#dc2626";
+                return;
+            }
+
+            // Reconstruimos el correo de forma visual para que sepas qué estás buscando
+            //etiquetaCorreo.innerText = "Escaneando: " + usuarioUrl + "@gmail.com";
+
+            // Reiniciar la vista
+            textoMensaje.innerText = "Buscando información...";
+            textoMensaje.style.color = "#6b7280";
             botonEnlace.style.display = 'none';
+            contenedorPin.style.display = 'none';
             spinner.style.display = 'block';
 
-            // Petición al servidor de Google
-            fetch(GOOGLE_APP_URL)
+            // 2. Construimos la URL final adjuntando solo el identificador 'm'
+            const fetchUrl = `${GOOGLE_APP_URL}?m=${encodeURIComponent(usuarioUrl)}`;
+
+            // Petición al servidor
+            fetch(fetchUrl)
                 .then(respuesta => {
                     if (!respuesta.ok) throw new Error('Error en la red');
                     return respuesta.json();
                 })
                 .then(datos => {
-                    spinner.style.display = 'none'; // Ocultar animación
+                    spinner.style.display = 'none';
+                    textoMensaje.innerText = datos.mensaje;
+                    
+                    if (datos.pin) {
+                        pinExtraido.innerText = datos.pin;
+                        contenedorPin.style.display = 'block';
+                    }
                     
                     if (datos.url) {
-                        textoMensaje.innerText = datos.mensaje;
                         botonEnlace.href = datos.url;
-                        botonEnlace.style.display = 'inline-block'; // Mostrar botón
-                    } else {
-                        textoMensaje.innerText = datos.mensaje;
+                        botonEnlace.style.display = 'inline-block';
                     }
                 })
                 .catch(error => {
                     spinner.style.display = 'none';
-                    textoMensaje.innerText = "Hubo un problema de conexión con Google Apps Script.";
+                    textoMensaje.innerText = "Hubo un problema de conexión con el servidor.";
                     console.error("Detalle del error:", error);
                 });
         }
 
-        // Ejecutar la búsqueda automáticamente al cargar la página
+        // Ejecutar al cargar la página
         window.onload = buscarEnlace;
     </script>
 
