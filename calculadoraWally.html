@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimizador de Recargas Wally</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .container {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+        h2 { margin-top: 0; color: #1a202c; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
+        input, select, button {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1.2rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        button {
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #2b6cb0; }
+        .result-box {
+            background: #ebf8ff;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #3182ce;
+            display: none; /* Se oculta hasta calcular */
+            margin-top: 1rem;
+        }
+        .result-box p { margin: 0.4rem 0; font-size: 0.95rem; }
+        .highlight { font-weight: bold; color: #2b6cb0; font-size: 1.3rem; display: block; margin-bottom: 0.5rem; }
+        hr { border: 0; border-top: 1px solid #bee3f8; margin: 0.8rem 0; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Optimizador Wally 🇵🇦</h2>
+        
+        <label for="montoAproximado">¿Cuánto necesitas recargar aproximadamente? ($)</label>
+        <input type="number" id="montoAproximado" placeholder="Ej. 100" min="1" step="0.01">
+
+        <label for="multiplicador">Selecciona tu factor de ahorro:</label>
+        <select id="multiplicador">
+            <option value="16.72">Factor Maestro ($16.72) - Máximo ahorro</option>
+            <option value="15.05">Factor Alternativo ($15.05)</option>
+        </select>
+
+        <button onclick="calcularOptimo()">Generar Monto Perfecto</button>
+
+        <div id="resultado" class="result-box">
+            <span class="highlight" id="montoFinal"></span>
+            <p><strong>Comisión Wally (2.99%):</strong> $<span id="comision"></span></p>
+            <p><strong>ITBMS (7%):</strong> $<span id="itbms"></span></p>
+            <hr>
+            <p><strong>Costo Total Transacción:</strong> $<span id="totalPago"></span></p>
+            <p style="font-size: 0.85rem; color: #4a5568; margin-top: 0.5rem;">
+                *Cálculo optimizado para que los decimales se redondeen a tu favor.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function calcularOptimo() {
+            const montoInput = parseFloat(document.getElementById('montoAproximado').value);
+            const factor = parseFloat(document.getElementById('multiplicador').value);
+
+            if (isNaN(montoInput) || montoInput <= 0) {
+                alert("Por favor, ingresa un monto válido mayor a 0.");
+                return;
+            }
+
+            // Lógica principal: División, toma del entero y multiplicación
+            let bloques = Math.floor(montoInput / factor);
+            
+            // Prevención: Si el monto es menor al factor, sugerimos al menos 1 bloque
+            if (bloques === 0) bloques = 1;
+
+            // 1. Monto óptimo a recargar
+            const montoOptimo = bloques * factor;
+
+            // 2. Cálculo de la comisión simulando el redondeo de la pasarela
+            // Math.round(numero * 100) / 100 es la forma estándar de redondear a 2 decimales en JS
+            const comisionExacta = montoOptimo * 0.0299;
+            const comisionCobrada = Math.round(comisionExacta * 100) / 100;
+
+            // 3. Cálculo del ITBMS sobre la comisión ya redondeada
+            const itbmsExacto = comisionCobrada * 0.07;
+            const itbmsCobrado = Math.round(itbmsExacto * 100) / 100;
+
+            // 4. Totales
+            const totalComisiones = comisionCobrada + itbmsCobrado;
+            const totalAPagar = montoOptimo + totalComisiones;
+
+            // Actualizar el DOM
+            document.getElementById('montoFinal').innerText = `Recarga Exacta: $${montoOptimo.toFixed(2)}`;
+            document.getElementById('comision').innerText = comisionCobrada.toFixed(2);
+            document.getElementById('itbms').innerText = itbmsCobrado.toFixed(2);
+            document.getElementById('totalPago').innerText = totalAPagar.toFixed(2);
+
+            // Mostrar la caja de resultados
+            document.getElementById('resultado').style.display = 'block';
+        }
+    </script>
+
+</body>
+</html>
