@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimizador Inteligente de Recargas</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .container {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            max-width: 480px;
+            width: 100%;
+        }
+        h2 { margin-top: 0; color: #1a202c; text-align: center; font-size: 1.5rem; }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem 0.2rem;
+            cursor: pointer;
+            font-weight: 600;
+            color: #718096;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .tab.active {
+            color: #3182ce;
+            border-bottom: 2px solid #3182ce;
+            margin-bottom: -2px;
+        }
+
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
+        input, select, button {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1.2rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        button.btn-primary {
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button.btn-primary:hover { background-color: #2b6cb0; }
+        
+        /* Resultados */
+        .result-box {
+            background: #f7fafc;
+            padding: 1.2rem;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            display: none;
+            margin-top: 1rem;
+        }
+        .result-box h3 { margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; text-align: center; color: #2d3748; }
+        .result-box p { margin: 0.4rem 0; font-size: 0.95rem; display: flex; justify-content: space-between;}
+        hr { border: 0; border-top: 1px solid #e2e8f0; margin: 0.8rem 0; }
+        
+        /* Sugerencias */
+        .sugerencias-box {
+            background: #ebf8ff;
+            border-left: 4px solid #3182ce;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-radius: 6px;
+        }
+        .sugerencias-box p.titulo { font-weight: bold; margin-top: 0; margin-bottom: 0.5rem; color: #2b6cb0;}
+        .btn-sugerencia {
+            background: white;
+            border: 1px solid #3182ce;
+            color: #3182ce;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+        }
+        .btn-sugerencia:hover { background: #3182ce; color: white; }
+
+        .ahorro-box {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .btn-guardar { background-color: #38a169; color: white; margin-top: 1rem; font-weight: bold; border: none; }
+        .btn-guardar:hover { background-color: #2f855a; }
+        .btn-reset { background-color: transparent; color: #e53e3e; border: 1px solid #e53e3e; padding: 0.4rem; font-size: 0.8rem; margin-top: 0.5rem; }
+        
+        .hidden { display: none !important; }
+        .text-green { color: #2f855a; font-weight: bold; }
+        .text-red { color: #e53e3e; font-weight: bold; }
+        .text-gray { color: #718096; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Optimizador Inteligente</h2>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="cambiarPlataforma('wally')" id="tab-wally">Wally</div>
+            <div class="tab" onclick="cambiarPlataforma('mercantil')" id="tab-mercantil">Mercantil</div>
+            <div class="tab" onclick="cambiarPlataforma('bdv')" id="tab-bdv">BDV</div>
+        </div>
+
+        <div id="form-container">
+            <label id="label-monto" for="montoAproximado">Tu monto exacto a evaluar ($):</label>
+            <input type="number" id="montoAproximado" placeholder="Ej. 10.00" min="1" step="0.01">
+
+            <div id="opciones-bdv" class="hidden">
+                <label for="tasaBdv">Tasa actual BCV (Bs/$):</label>
+                <input type="number" id="tasaBdv" placeholder="Ej. 36.50" min="1" step="0.01">
+            </div>
+
+            <div id="opciones-wally">
+                <label for="factorWally">Factor de escalado:</label>
+                <select id="factorWally">
+                    <option value="35.61">Factor Maestro ($35.61)</option>
+                    <option value="69.06">Factor Alternativo ($69.06)</option>
+                </select>
+            </div>
+
+            <div id="opciones-mercantil" class="hidden">
+                <label for="factorMercantil">Adición de escalado:</label>
+                <select id="factorMercantil">
+                    <option value="1.49">Adición Maestra (+$1.49)</option>
+                    <option value="12.89">Adición Alternativa (+$12.89)</option>
+                </select>
+            </div>
+
+            <button class="btn-primary" onclick="ejecutarAnalisis()">Evaluar Mi Monto</button>
+        </div>
+
+        <div id="resultado" class="result-box">
+            <h3>Análisis de: $<span id="montoAnalizado"></span></h3>
+            
+            <div id="detalles-comunes">
+                <p><span>Comisión Base:</span> <span id="comision"></span></p>
+                <p><span>ITBMS (7%):</span> <span id="itbms"></span></p>
+                <hr>
+                <p><strong id="label-total-neto">Total:</strong> <strong id="totalMonto"></strong></p>
+            </div>
+
+            <div id="detalles-bdv" class="hidden">
+                <p><span>Costo en Bs:</span> <span id="bdv-costo"></span></p>
+                <p><span>Comisión BDV:</span> <span id="bdv-comision"></span></p>
+                <hr>
+                <p><strong>Total a Debitar en Bs:</strong> <strong id="bdv-total"></strong></p>
+            </div>
+
+            <div style="margin-top: 1rem; text-align: center;">
+                <span>Resultado por redondeo: </span><br>
+                <span id="ahorroActual" style="font-size: 1.1rem;"></span>
+            </div>
+
+            <div id="caja-sugerencias" class="sugerencias-box hidden">
+                <p class="titulo">💡 Alternativas para ganar:</p>
+                <div id="botones-sugerencias"></div>
+            </div>
+
+            <button class="btn-guardar" id="btnGuardar" onclick="guardarTransaccion()">Guardar este ahorro</button>
+        </div>
+
+        <div class="ahorro-box">
+            <div>Ahorro Histórico Acumulado</div>
+            <div id="ahorroTotalDisplay" style="color: #2f855a; font-weight: bold; font-size: 1.2rem;">$0.0000</div>
+            <button class="btn-reset" onclick="resetearHistorial()">Borrar Historial</button>
+        </div>
+    </div>
+
+    <script>
+        let plataformaActual = 'wally';
+        let ahorroPendienteUSD = 0;
+
+        document.addEventListener('DOMContentLoaded', actualizarDisplayHistorial);
+
+        function cambiarPlataforma(plataforma) {
+            plataformaActual = plataforma;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${plataforma}`).classList.add('active');
+            
+            document.getElementById('opciones-wally').classList.toggle('hidden', plataforma !== 'wally');
+            document.getElementById('opciones-mercantil').classList.toggle('hidden', plataforma !== 'mercantil');
+            document.getElementById('opciones-bdv').classList.toggle('hidden', plataforma !== 'bdv');
+            
+            document.getElementById('resultado').style.display = 'none';
+        }
+
+        const redondear = (num) => Math.round((num + Number.EPSILON) * 100) / 100;
+        const truncar = (num) => Math.floor(num * 100) / 100;
+
+        // Función central para calcular las matemáticas puras de cualquier monto
+        function calcularMatematicas(monto, plataforma, tasa = 0) {
+            if (plataforma === 'wally') {
+                let comExacta = monto * 0.0299;
+                let com = redondear(comExacta);
+                let itbmsExacto = com * 0.07;
+                let itbms = redondear(itbmsExacto);
+                let ahorro = (comExacta + itbmsExacto) - (com + itbms);
+                return { com, itbms, total: redondear(monto + com + itbms), ahorro };
+            } 
+            else if (plataforma === 'mercantil') {
+                let comExacta = monto * 0.05;
+                let com = redondear(comExacta);
+                let itbmsExacto = com * 0.07;
+                let itbms = redondear(itbmsExacto);
+                let ahorro = (comExacta + itbmsExacto) - (com + itbms);
+                return { com, itbms, total: redondear(monto - com - itbms), ahorro };
+            } 
+            else if (plataforma === 'bdv') {
+                let bs = redondear(monto * tasa);
+                let comExactaBs = bs * 0.005;
+                let comCobradaBs = truncar(comExactaBs);
+                let ahorroBs = comExactaBs - comCobradaBs;
+                return { bsCosto: bs, comCobrada: comCobradaBs, ahorro: ahorroBs / tasa };
+            }
+        }
+
+        // Función para escanear los alrededores de un monto y buscar picos de ahorro
+        function buscarMejorLocal(montoBase, plataforma, tasa = 0) {
+            let maxAhorro = -999;
+            let mejorMonto = montoBase;
+            // Escanear +/- $5 en pasos de 1 centavo
+            let min = Math.max(1, montoBase - 5);
+            let max = montoBase + 5;
+
+            for(let i = min * 100; i <= max * 100; i++) {
+                let testVal = i / 100;
+                let res = calcularMatematicas(testVal, plataforma, tasa);
+                // Si el ahorro es significativamente mejor y estrictamente positivo
+                if (res.ahorro > maxAhorro && res.ahorro > 0.001) {
+                    maxAhorro = res.ahorro;
+                    mejorMonto = testVal;
+                }
+            }
+            return { monto: mejorMonto, ahorro: maxAhorro };
+        }
+
+        // Se llama cuando el usuario hace clic en una sugerencia
+        function aplicarSugerencia(monto) {
+            document.getElementById('montoAproximado').value = monto.toFixed(2);
+            ejecutarAnalisis();
+        }
+
+        function ejecutarAnalisis() {
+            const montoInput = parseFloat(document.getElementById('montoAproximado').value);
+            if (isNaN(montoInput) || montoInput <= 0) return alert("Ingresa un monto válido.");
+
+            let tasa = 0;
+            if (plataformaActual === 'bdv') {
+                tasa = parseFloat(document.getElementById('tasaBdv').value);
+                if (isNaN(tasa) || tasa <= 0) return alert("Ingresa una tasa válida para BDV.");
+            }
+
+            // 1. Evaluar el monto exacto del usuario
+            const resExacto = calcularMatematicas(montoInput, plataformaActual, tasa);
+            ahorroPendienteUSD = resExacto.ahorro;
+
+            // Renderizar datos del monto exacto
+            document.getElementById('montoAnalizado').innerText = montoInput.toFixed(2);
+            document.getElementById('detalles-comunes').classList.add('hidden');
+            document.getElementById('detalles-bdv').classList.add('hidden');
+
+            if (plataformaActual === 'bdv') {
+                document.getElementById('bdv-costo').innerText = `${resExacto.bsCosto.toFixed(2)} Bs`;
+                document.getElementById('bdv-comision').innerText = `${resExacto.comCobrada.toFixed(2)} Bs`;
+                document.getElementById('bdv-total').innerText = `${(resExacto.bsCosto + resExacto.comCobrada).toFixed(2)} Bs`;
+                document.getElementById('detalles-bdv').classList.remove('hidden');
+            } else {
+                document.getElementById('comision').innerText = `$${resExacto.com.toFixed(2)}`;
+                document.getElementById('itbms').innerText = `$${resExacto.itbms.toFixed(2)}`;
+                document.getElementById('label-total-neto').innerText = plataformaActual === 'wally' ? "Total Descontado:" : "Neto a Recibir:";
+                document.getElementById('totalMonto').innerText = `$${resExacto.total.toFixed(2)}`;
+                document.getElementById('detalles-comunes').classList.remove('hidden');
+            }
+
+            // Pintar el ahorro
+            const elAhorro = document.getElementById('ahorroActual');
+            if (plataformaActual === 'bdv') {
+                elAhorro.innerHTML = `<span class="text-green">+$${resExacto.ahorro.toFixed(6)}</span>`;
+            } else {
+                if (resExacto.ahorro > 0) elAhorro.innerHTML = `<span class="text-green">Ganas +$${resExacto.ahorro.toFixed(4)}</span>`;
+                else if (resExacto.ahorro < 0) elAhorro.innerHTML = `<span class="text-red">Pierdes -$${Math.abs(resExacto.ahorro).toFixed(4)}</span>`;
+                else elAhorro.innerHTML = `<span class="text-gray">Empate ($0.0000)</span>`;
+            }
+
+            // 2. Generar Sugerencias Dinámicas
+            let sugerencias = [];
+            const cajaSugerencias = document.getElementById('caja-sugerencias');
+            const contBotones = document.getElementById('botones-sugerencias');
+            contBotones.innerHTML = '';
+
+            if (plataformaActual === 'wally') {
+                const factor = parseFloat(document.getElementById('factorWally').value);
+                if (montoInput >= factor) {
+                    let base = Math.floor(montoInput / factor) * factor;
+                    sugerencias.push({ m: redondear(base), lbl: 'Múltiplo Inferior' });
+                    sugerencias.push({ m: redondear(base + factor), lbl: 'Múltiplo Superior' });
+                } else {
+                    // Mini-factor dinámico
+                    let localOpt = buscarMejorLocal(montoInput, 'wally');
+                    if (localOpt.monto !== montoInput) sugerencias.push({ m: localOpt.monto, lbl: 'Factor Dinámico Menor' });
+                    sugerencias.push({ m: factor, lbl: 'Tu Factor Configurado' });
+                }
+            } 
+            else if (plataformaActual === 'mercantil') {
+                const adicion = parseFloat(document.getElementById('factorMercantil').value);
+                let base20 = Math.floor(montoInput / 20) * 20;
+                if (montoInput >= 20) {
+                    sugerencias.push({ m: redondear(base20 + adicion), lbl: 'Cercano Inferior' });
+                    sugerencias.push({ m: redondear(base20 + 20 + adicion), lbl: 'Cercano Superior' });
+                } else {
+                    let localOpt = buscarMejorLocal(montoInput, 'mercantil');
+                    if (localOpt.monto !== montoInput) sugerencias.push({ m: localOpt.monto, lbl: 'Mejor Opción Cercana' });
+                    sugerencias.push({ m: redondear(20 + adicion), lbl: 'Primer Bloque Estándar' });
+                }
+            }
+            else if (plataformaActual === 'bdv') {
+                let localOpt = buscarMejorLocal(montoInput, 'bdv', tasa);
+                if (localOpt.monto !== montoInput && localOpt.ahorro > resExacto.ahorro) {
+                    sugerencias.push({ m: localOpt.monto, lbl: 'Monto de Máximo Truncamiento' });
+                }
+            }
+
+            // Filtrar y renderizar sugerencias
+            let renderizadas = 0;
+            sugerencias.forEach(sug => {
+                if (sug.m !== montoInput) {
+                    let resSug = calcularMatematicas(sug.m, plataformaActual, tasa);
+                    if (resSug.ahorro > 0) {
+                        let formatoAhorro = plataformaActual === 'bdv' ? resSug.ahorro.toFixed(6) : resSug.ahorro.toFixed(4);
+                        contBotones.innerHTML += `
+                            <button class="btn-sugerencia" onclick="aplicarSugerencia(${sug.m})">
+                                <span><b>${sug.lbl}:</b> $${sug.m.toFixed(2)}</span>
+                                <span class="text-green">+$${formatoAhorro}</span>
+                            </button>
+                        `;
+                        renderizadas++;
+                    }
+                }
+            });
+
+            if (renderizadas > 0 && resExacto.ahorro <= 0.001) {
+                cajaSugerencias.classList.remove('hidden');
+            } else {
+                cajaSugerencias.classList.add('hidden');
+            }
+
+            // Activar/Desactivar botón guardar
+            const btnGuardar = document.getElementById('btnGuardar');
+            if (ahorroPendienteUSD > 0) {
+                btnGuardar.disabled = false;
+                btnGuardar.style.opacity = '1';
+                btnGuardar.innerText = "Guardar este ahorro";
+            } else {
+                btnGuardar.disabled = true;
+                btnGuardar.style.opacity = '0.5';
+                btnGuardar.innerText = "Nada que guardar";
+            }
+
+            document.getElementById('resultado').style.display = 'block';
+        }
+
+        function guardarTransaccion() {
+            if (ahorroPendienteUSD <= 0) return;
+            let acumulado = parseFloat(localStorage.getItem('ahorroTotalWallyMercantilBDV')) || 0;
+            localStorage.setItem('ahorroTotalWallyMercantilBDV', (acumulado + ahorroPendienteUSD).toString());
+            
+            actualizarDisplayHistorial();
+            ahorroPendienteUSD = 0; 
+            
+            const btn = document.getElementById('btnGuardar');
+            btn.innerText = "¡Guardado!";
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+        }
+
+        function resetearHistorial() {
+            if(confirm("¿Borrar historial?")) {
+                localStorage.removeItem('ahorroTotalWallyMercantilBDV');
+                actualizarDisplayHistorial();
+            }
+        }
+
+        function actualizarDisplayHistorial() {
+            let acumulado = parseFloat(localStorage.getItem('ahorroTotalWallyMercantilBDV')) || 0;
+            document.getElementById('ahorroTotalDisplay').innerText = `$${acumulado.toFixed(4)}`;
+        }
+    </script>
+</body>
+</html>
