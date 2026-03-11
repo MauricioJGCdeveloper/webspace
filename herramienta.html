@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimizador Financiero Definitivo</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .container {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            max-width: 450px;
+            width: 100%;
+        }
+        h2 { margin-top: 0; color: #1a202c; text-align: center; font-size: 1.5rem; }
+        
+        /* Pestañas */
+        .tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem 0.2rem;
+            cursor: pointer;
+            font-weight: 600;
+            color: #718096;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+        .tab.active {
+            color: #3182ce;
+            border-bottom: 2px solid #3182ce;
+            margin-bottom: -2px;
+        }
+
+        /* Formulario */
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; }
+        input, select, button {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1.2rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        button {
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #2b6cb0; }
+        button.btn-guardar {
+            background-color: #38a169;
+            margin-top: 1rem;
+        }
+        button.btn-guardar:hover { background-color: #2f855a; }
+        button.btn-reset {
+            background-color: transparent;
+            color: #e53e3e;
+            border: 1px solid #e53e3e;
+            padding: 0.4rem;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Resultados */
+        .result-box {
+            background: #ebf8ff;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #3182ce;
+            display: none;
+            margin-top: 1rem;
+        }
+        .result-box p { margin: 0.4rem 0; font-size: 0.95rem; display: flex; justify-content: space-between;}
+        .highlight { font-weight: bold; color: #2b6cb0; font-size: 1.2rem; text-align: center; display: block; margin-bottom: 0.8rem; }
+        hr { border: 0; border-top: 1px solid #bee3f8; margin: 0.8rem 0; }
+        
+        .ahorro-box {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .ahorro-val { color: #2f855a; font-weight: bold; font-size: 1.2rem; }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Optimizador Financiero</h2>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="cambiarPlataforma('wally')" id="tab-wally">Wally</div>
+            <div class="tab" onclick="cambiarPlataforma('mercantil')" id="tab-mercantil">Mercantil</div>
+            <div class="tab" onclick="cambiarPlataforma('bdv')" id="tab-bdv">BDV</div>
+        </div>
+
+        <div id="form-container">
+            <label id="label-monto" for="montoAproximado">Monto aproximado ($):</label>
+            <input type="number" id="montoAproximado" placeholder="Ej. 100" min="1" step="0.01">
+
+            <div id="opciones-bdv" class="hidden">
+                <label for="tasaBdv">Tasa actual del BCV (Bs/$):</label>
+                <input type="number" id="tasaBdv" placeholder="Ej. 36.50" min="1" step="0.01">
+            </div>
+
+            <div id="opciones-wally">
+                <label for="factorWally">Multiplicador Óptimo:</label>
+                <select id="factorWally">
+                    <option value="16.72">Factor Maestro ($16.72)</option>
+                    <option value="15.05">Factor Alternativo ($15.05)</option>
+                </select>
+            </div>
+
+            <div id="opciones-mercantil" class="hidden">
+                <label for="factorMercantil">Adición Óptima:</label>
+                <select id="factorMercantil">
+                    <option value="1.49">Adición Maestra (+$1.49)</option>
+                    <option value="12.89">Adición Alternativa (+$12.89)</option>
+                </select>
+            </div>
+
+            <button onclick="calcularOptimo()">Calcular Optimización</button>
+        </div>
+
+        <div id="resultado" class="result-box">
+            <span class="highlight" id="montoFinal"></span>
+            
+            <div id="detalles-comunes">
+                <p><span>Comisión Base:</span> <span id="comision"></span></p>
+                <p id="linea-itbms"><span>ITBMS (7%):</span> <span id="itbms"></span></p>
+                <hr>
+                <p><strong id="label-total-neto">Total:</strong> <strong id="totalMonto"></strong></p>
+            </div>
+
+            <div id="detalles-bdv" class="hidden">
+                <p><span>Costo en Bs:</span> <span id="bdv-costo"></span></p>
+                <p><span>Comisión BDV (0.5%):</span> <span id="bdv-comision"></span></p>
+                <hr>
+                <p><strong>Total a Debitar en Bs:</strong> <strong id="bdv-total"></strong></p>
+            </div>
+
+            <div style="margin-top: 1rem; color: #2f855a; font-size: 0.9rem; text-align: center;">
+                Ahorraste en esta transacción: <strong id="ahorroActual"></strong>
+            </div>
+
+            <button class="btn-guardar" onclick="guardarTransaccion()">Guardar y sumar al histórico</button>
+        </div>
+
+        <div class="ahorro-box">
+            <div>Ahorro Histórico Acumulado</div>
+            <div class="ahorro-val" id="ahorroTotalDisplay">$0.0000</div>
+            <button class="btn-reset" onclick="resetearHistorial()">Borrar Historial</button>
+        </div>
+    </div>
+
+    <script>
+        let plataformaActual = 'wally';
+        let ahorroPendienteUSD = 0; // Se calcula en cada clic y espera a ser guardado
+
+        // Cargar el historial al iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            actualizarDisplayHistorial();
+        });
+
+        function cambiarPlataforma(plataforma) {
+            plataformaActual = plataforma;
+            
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${plataforma}`).classList.add('active');
+            
+            document.getElementById('opciones-wally').classList.toggle('hidden', plataforma !== 'wally');
+            document.getElementById('opciones-mercantil').classList.toggle('hidden', plataforma !== 'mercantil');
+            document.getElementById('opciones-bdv').classList.toggle('hidden', plataforma !== 'bdv');
+            
+            if(plataforma === 'bdv') {
+                document.getElementById('label-monto').innerText = 'Dólares a comprar aprox ($):';
+            } else if(plataforma === 'mercantil') {
+                document.getElementById('label-monto').innerText = 'Deducción a la tarjeta aprox ($):';
+            } else {
+                document.getElementById('label-monto').innerText = 'Monto a recargar aprox ($):';
+            }
+                
+            document.getElementById('resultado').style.display = 'none';
+        }
+
+        const redondear = (num) => Math.round((num + Number.EPSILON) * 100) / 100;
+        const truncar = (num) => Math.floor(num * 100) / 100;
+
+        function calcularOptimo() {
+            const montoInput = parseFloat(document.getElementById('montoAproximado').value);
+
+            if (isNaN(montoInput) || montoInput <= 0) {
+                alert("Por favor, ingresa un monto válido.");
+                return;
+            }
+
+            let montoOptimo, comision, itbms;
+            ahorroPendienteUSD = 0;
+
+            document.getElementById('detalles-comunes').classList.add('hidden');
+            document.getElementById('detalles-bdv').classList.add('hidden');
+
+            if (plataformaActual === 'wally') {
+                const factor = parseFloat(document.getElementById('factorWally').value);
+                let bloques = Math.floor(montoInput / factor) || 1;
+                
+                montoOptimo = redondear(bloques * factor);
+                
+                // Exacto vs Cobrado
+                const comisionExacta = montoOptimo * 0.0299;
+                comision = redondear(comisionExacta);
+                
+                const itbmsExacto = comision * 0.07;
+                itbms = redondear(itbmsExacto);
+                
+                // Ahorro: Lo que la matemática exacta dictaba menos lo que el banco redondeó
+                const exactoTotal = comisionExacta + itbmsExacto;
+                const cobradoTotal = comision + itbms;
+                ahorroPendienteUSD = exactoTotal - cobradoTotal;
+
+                document.getElementById('montoFinal').innerText = `Recargar Exactamente: $${montoOptimo.toFixed(2)}`;
+                document.getElementById('comision').innerText = `$${comision.toFixed(2)}`;
+                document.getElementById('itbms').innerText = `$${itbms.toFixed(2)}`;
+                document.getElementById('label-total-neto').innerText = "Total Descontado:";
+                document.getElementById('totalMonto').innerText = `$${redondear(montoOptimo + comision + itbms).toFixed(2)}`;
+                
+                document.getElementById('detalles-comunes').classList.remove('hidden');
+
+            } else if (plataformaActual === 'mercantil') {
+                const adicion = parseFloat(document.getElementById('factorMercantil').value);
+                let multiplo20 = Math.floor(montoInput / 20) * 20;
+                if (multiplo20 === 0) multiplo20 = 20;
+                
+                montoOptimo = redondear(multiplo20 + adicion);
+                
+                const comisionExacta = montoOptimo * 0.05;
+                comision = redondear(comisionExacta);
+                
+                const itbmsExacto = comision * 0.07;
+                itbms = redondear(itbmsExacto);
+                
+                // En Mercantil es deducción, así que el ahorro está en pagar menos comisiones
+                const exactoTotal = comisionExacta + itbmsExacto;
+                const cobradoTotal = comision + itbms;
+                ahorroPendienteUSD = exactoTotal - cobradoTotal;
+
+                document.getElementById('montoFinal').innerText = `Deducir Exactamente: $${montoOptimo.toFixed(2)}`;
+                document.getElementById('comision').innerText = `$${comision.toFixed(2)}`;
+                document.getElementById('itbms').innerText = `$${itbms.toFixed(2)}`;
+                document.getElementById('label-total-neto').innerText = "Saldo Neto a Recibir:";
+                document.getElementById('totalMonto').innerText = `$${redondear(montoOptimo - comision - itbms).toFixed(2)}`;
+                
+                document.getElementById('detalles-comunes').classList.remove('hidden');
+
+            } else if (plataformaActual === 'bdv') {
+                const tasa = parseFloat(document.getElementById('tasaBdv').value);
+                if (isNaN(tasa) || tasa <= 0) {
+                    alert("Ingresa una tasa válida para el BDV.");
+                    return;
+                }
+
+                // Escáner de optimización (Buscamos +/- $1.50 en pasos de 1 centavo)
+                let maxAhorroBs = -1;
+                let mejorMontoUSD = montoInput;
+                let mejorComisionCobrada = 0;
+                let mejorBsCosto = 0;
+
+                const rangoMin = Math.max(100, Math.floor((montoInput - 1.5) * 100));
+                const rangoMax = Math.floor((montoInput + 1.5) * 100);
+
+                for (let centavos = rangoMin; centavos <= rangoMax; centavos++) {
+                    let testUSD = centavos / 100;
+                    let bsEquivalente = redondear(testUSD * tasa);
+                    
+                    let comisionExactaBs = bsEquivalente * 0.005;
+                    // BDV usa truncamiento (Math.floor)
+                    let comisionCobradaBs = truncar(comisionExactaBs);
+                    
+                    let ahorroBs = comisionExactaBs - comisionCobradaBs;
+
+                    // Nos quedamos con el monto que deje el residuo más grande
+                    if (ahorroBs > maxAhorroBs) {
+                        maxAhorroBs = ahorroBs;
+                        mejorMontoUSD = testUSD;
+                        mejorComisionCobrada = comisionCobradaBs;
+                        mejorBsCosto = bsEquivalente;
+                    }
+                }
+
+                montoOptimo = mejorMontoUSD;
+                ahorroPendienteUSD = maxAhorroBs / tasa;
+
+                document.getElementById('montoFinal').innerText = `Comprar Exactamente: $${montoOptimo.toFixed(2)}`;
+                document.getElementById('bdv-costo').innerText = `${mejorBsCosto.toFixed(2)} Bs`;
+                document.getElementById('bdv-comision').innerText = `${mejorComisionCobrada.toFixed(2)} Bs`;
+                document.getElementById('bdv-total').innerText = `${(mejorBsCosto + mejorComisionCobrada).toFixed(2)} Bs`;
+                
+                document.getElementById('detalles-bdv').classList.remove('hidden');
+            }
+
+            // Mostrar Ahorro
+            // Si el cálculo da negativo (raro pero posible en simulaciones manuales), lo mostramos como 0.
+            const ahorroMostrar = ahorroPendienteUSD > 0 ? ahorroPendienteUSD : 0;
+            document.getElementById('ahorroActual').innerText = `$${ahorroMostrar.toFixed(4)}`;
+            
+            document.getElementById('resultado').style.display = 'block';
+        }
+
+        function guardarTransaccion() {
+            if (ahorroPendienteUSD <= 0) return;
+
+            let acumuladoStr = localStorage.getItem('ahorroTotalWallyMercantilBDV');
+            let acumulado = acumuladoStr ? parseFloat(acumuladoStr) : 0;
+            
+            acumulado += ahorroPendienteUSD;
+            localStorage.setItem('ahorroTotalWallyMercantilBDV', acumulado.toString());
+            
+            actualizarDisplayHistorial();
+            ahorroPendienteUSD = 0; // Resetear para no guardar doble
+            
+            // Efecto visual simple
+            const btn = document.querySelector('.btn-guardar');
+            const textoOriginal = btn.innerText;
+            btn.innerText = "¡Guardado!";
+            btn.style.backgroundColor = "#276749";
+            setTimeout(() => {
+                btn.innerText = textoOriginal;
+                btn.style.backgroundColor = "#38a169";
+            }, 1500);
+        }
+
+        function resetearHistorial() {
+            if(confirm("¿Estás seguro de querer borrar tu historial de ahorro acumulado?")) {
+                localStorage.removeItem('ahorroTotalWallyMercantilBDV');
+                actualizarDisplayHistorial();
+            }
+        }
+
+        function actualizarDisplayHistorial() {
+            let acumuladoStr = localStorage.getItem('ahorroTotalWallyMercantilBDV');
+            let acumulado = acumuladoStr ? parseFloat(acumuladoStr) : 0;
+            document.getElementById('ahorroTotalDisplay').innerText = `$${acumulado.toFixed(4)}`;
+        }
+    </script>
+</body>
+</html>
